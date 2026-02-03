@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Learning Rate Effect</title>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+</head>
+<body>
+<h2>Task 2: Learning Rate Experiment</h2>
+
+<script>
+const xs = tf.tensor([...Array(100)].map(_=>Math.random()*10), [100,1]);
+const ys = tf.tensor(xs.dataSync().map(x=>2*x+1+(Math.random()*2-1)), [100,1]);
+
+const learningRates = [0.001, 0.01, 0.1];
+
+async function experimentLR(){
+    for(let lr of learningRates){
+        const model = tf.sequential();
+        model.add(tf.layers.dense({units:1, inputShape:[1]}));
+        model.compile({optimizer:tf.train.sgd(lr), loss:'meanSquaredError'});
+        
+        const history = await model.fit(xs, ys, {
+            epochs:50,
+            batchSize:10,
+            callbacks:{
+                onEpochEnd:(epoch,logs)=>{
+                    if(epoch%10===0){
+                        console.log(`LR ${lr}, Epoch ${epoch+1}, Loss: ${logs.loss.toFixed(4)}`);
+                    }
+                }
+            }
+        });
+    }
+}
+
+experimentLR();
+</script>
+</body>
+</html>

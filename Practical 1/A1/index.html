@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Regression: Predicted vs Actual</title>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h2>Task 1: Predicted vs Actual</h2>
+<canvas id="chart1" width="600" height="400"></canvas>
+
+<script>
+const numPoints = 100;
+const xs = [], ys = [];
+for(let i=0;i<numPoints;i++){
+    let x = Math.random()*10;
+    xs.push(x);
+    ys.push(2*x + 1 + (Math.random()*2-1)); // y = 2x +1 + noise
+}
+
+const tensorX = tf.tensor(xs, [numPoints,1]);
+const tensorY = tf.tensor(ys, [numPoints,1]);
+
+const model = tf.sequential();
+model.add(tf.layers.dense({units:1, inputShape:[1]}));
+model.compile({optimizer: tf.train.sgd(0.01), loss:'meanSquaredError'});
+
+async function trainAndPlot(){
+    await model.fit(tensorX, tensorY, {epochs:100, batchSize:10});
+    const preds = model.predict(tensorX);
+    const predicted = Array.from(preds.dataSync());
+
+    new Chart(document.getElementById('chart1').getContext('2d'), {
+        type:'scatter',
+        data:{
+            datasets:[
+                {label:'Actual', data:xs.map((x,i)=>({x:x,y:ys[i]})), backgroundColor:'blue'},
+                {label:'Predicted', data:xs.map((x,i)=>({x:x,y:predicted[i]})), backgroundColor:'red'}
+            ]
+        },
+        options:{
+            scales:{
+                x:{title:{display:true,text:'X values'}},
+                y:{title:{display:true,text:'Y values'}}
+            }
+        }
+    });
+}
+
+trainAndPlot();
+</script>
+</body>
+</html>

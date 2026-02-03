@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Prediction on Unseen Inputs</title>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.11.0/dist/tf.min.js"></script>
+</head>
+<body>
+<h2>Task 3: Predict Unseen Inputs</h2>
+
+<script>
+const xs = tf.tensor([...Array(100)].map(_=>Math.random()*10), [100,1]);
+const ys = tf.tensor(xs.dataSync().map(x=>2*x+1+(Math.random()*2-1)), [100,1]);
+
+const model = tf.sequential();
+model.add(tf.layers.dense({units:1, inputShape:[1]}));
+model.compile({optimizer:tf.train.sgd(0.01), loss:'meanSquaredError'});
+
+async function predictUnseen(){
+    await model.fit(xs, ys, {epochs:100, batchSize:10});
+    
+    const unseen = tf.tensor([3,5,7,9]);
+    const preds = model.predict(unseen);
+    console.log("Predicted values for [3,5,7,9]:", Array.from(preds.dataSync()));
+
+    // Compare with expected values (y=2x+1)
+    const expected = [7,11,15,19];
+    console.log("Expected values:", expected);
+}
+
+predictUnseen();
+</script>
+</body>
+</html>
