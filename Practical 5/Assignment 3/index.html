@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webcam Object Classification with FPS - MobileNet</title>
+
+<!-- TensorFlow.js -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<!-- MobileNet -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background: #f0f0f0;
+}
+
+h1 {
+    color: #333;
+}
+
+#webcam-container {
+    position: relative;
+    display: inline-block;
+}
+
+video {
+    border-radius: 10px;
+    max-width: 640px;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+</style>
+</head>
+<body>
+
+<h1>Webcam Classification with FPS (MobileNet)</h1>
+<p>Top-3 predictions overlayed. FPS displayed in top-left corner.</p>
+
+<div id="webcam-container">
+    <video id="webcam" autoplay playsinline width="640" height="480"></video>
+    <canvas id="overlay" width="640" height="480"></canvas>
+</div>
+
+<script>
+let model, webcam, canvas, ctx;
+let lastTime = performance.now();
+let fps = 0;
+
+// Load MobileNet
+async function loadModel() {
+    model = await mobilenet.load();
+    console.log("MobileNet loaded!");
+    startWebcam();
+}
+
+// Start webcam
+async function startWebcam() {
+    webcam = document.getElementById('webcam');
+    canvas = document.getElementById('overlay');
+    ctx = canvas.getContext('2d');
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        webcam.srcObject = stream;
+        webcam.addEventListener('loadeddata', classifyFrame);
+    } catch (err) {
+        console.error("Webcam access error:", err);
+    }
+}
+
+// Classify each frame and overlay labels + FPS
+async function classifyFrame() {
+    if (!model) return;
+
+    const now = performance.now();
+    fps = 1000 / (now - lastTime);
+    lastTime = now;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const predictions = await model.classify(webcam);
+
+    // Draw semi-transparent background for labels
+    ctx.fillStyle = "rgba(0,0,0,0.5)";
+    ctx.fillRect(0, 0, canvas.width, 80);
+
+    // Draw top-3 predictions
+    ctx.fillStyle = "#00FFFF";
+    ctx.font = "20px Arial";
+    predictions.forEach((pred, i) => {
+        ctx.fillText(
+            `${i+1}. ${pred.className} - ${(pred.probability*100).toFixed(2)}%`,
+            10,
+            25 + i*20
+        );
+    });
+
+    // Draw FPS
+    ctx.fillStyle = "#FF0000";
+    ctx.font = "20px Arial";
+    ctx.fillText(`FPS: ${fps.toFixed(1)}`, canvas.width - 100, 30);
+
+    requestAnimationFrame(classifyFrame);
+}
+
+loadModel();
+</script>
+
+</body>
+</html>

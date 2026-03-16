@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webcam Object Classification - MobileNet</title>
+
+<!-- TensorFlow.js -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<!-- MobileNet model -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background: #f0f0f0;
+}
+h1 { color: #333; }
+#webcam-container {
+    position: relative;
+    display: inline-block;
+    margin-top: 20px;
+}
+video {
+    border-radius: 10px;
+    max-width: 600px;
+}
+#predictions {
+    margin-top: 15px;
+    font-size: 18px;
+    background: #fff;
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+}
+</style>
+</head>
+<body>
+
+<h1>Webcam Object Classification (MobileNet)</h1>
+<p>Allow webcam access to classify objects in real-time.</p>
+
+<div id="webcam-container">
+    <video id="webcam" autoplay playsinline width="600"></video>
+</div>
+
+<div id="predictions">Loading model...</div>
+
+<script>
+let model;
+const webcam = document.getElementById('webcam');
+const predictionsDiv = document.getElementById('predictions');
+
+// Load MobileNet model
+async function loadModel() {
+    model = await mobilenet.load();
+    predictionsDiv.innerText = "Model loaded! Starting webcam...";
+    startWebcam();
+}
+loadModel();
+
+// Start webcam
+async function startWebcam() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        webcam.srcObject = stream;
+        webcam.addEventListener('loadeddata', predictWebcam);
+    } catch (err) {
+        predictionsDiv.innerText = "Error accessing webcam: " + err;
+    }
+}
+
+// Classify each frame
+async function predictWebcam() {
+    if (!model) return;
+
+    const predictions = await model.classify(webcam);
+    let html = "<strong>Top-3 Predictions:</strong><br>";
+    predictions.forEach((pred, index) => {
+        html += `${index + 1}. ${pred.className} - ${(pred.probability*100).toFixed(2)}%<br>`;
+    });
+    predictionsDiv.innerHTML = html;
+
+    requestAnimationFrame(predictWebcam); // Loop for next frame
+}
+</script>
+
+</body>
+</html>

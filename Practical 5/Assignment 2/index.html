@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Webcam Object Classification with Overlay - MobileNet</title>
+
+<!-- TensorFlow.js -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<!-- MobileNet -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background: #f0f0f0;
+}
+
+h1 {
+    color: #333;
+}
+
+#webcam-container {
+    position: relative;
+    display: inline-block;
+}
+
+video {
+    border-radius: 10px;
+    max-width: 640px;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+</style>
+</head>
+<body>
+
+<h1>Webcam Object Classification (Overlay Labels)</h1>
+<p>Top-3 predicted labels are displayed directly on the video feed.</p>
+
+<div id="webcam-container">
+    <video id="webcam" autoplay playsinline width="640" height="480"></video>
+    <canvas id="overlay" width="640" height="480"></canvas>
+</div>
+
+<script>
+let model, webcam, canvas, ctx;
+
+// Load MobileNet
+async function loadModel() {
+    model = await mobilenet.load();
+    console.log("MobileNet model loaded!");
+    startWebcam();
+}
+
+// Start webcam
+async function startWebcam() {
+    webcam = document.getElementById('webcam');
+    canvas = document.getElementById('overlay');
+    ctx = canvas.getContext('2d');
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        webcam.srcObject = stream;
+        webcam.addEventListener('loadeddata', classifyFrame);
+    } catch (err) {
+        console.error("Webcam access error:", err);
+    }
+}
+
+// Classify each frame and overlay labels
+async function classifyFrame() {
+    if (!model) return;
+
+    // Clear canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Classify current frame
+    const predictions = await model.classify(webcam);
+
+    // Draw semi-transparent rectangle at top for labels
+    ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    ctx.fillRect(0, 0, canvas.width, 60);
+
+    // Draw top-3 labels
+    ctx.fillStyle = "#00FFFF";
+    ctx.font = "20px Arial";
+    predictions.forEach((pred, index) => {
+        ctx.fillText(
+            `${index+1}. ${pred.className} - ${(pred.probability*100).toFixed(2)}%`,
+            10,
+            25 + index*20
+        );
+    });
+
+    // Loop for next frame
+    requestAnimationFrame(classifyFrame);
+}
+
+loadModel();
+</script>
+
+</body>
+</html>
