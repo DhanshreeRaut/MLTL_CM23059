@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sentiment Analysis Tester</title>
+
+<style>
+
+body{
+font-family: Arial;
+background: linear-gradient(120deg,#84fab0,#8fd3f4);
+text-align:center;
+padding:50px;
+}
+
+.container{
+background:white;
+padding:30px;
+border-radius:10px;
+width:420px;
+margin:auto;
+box-shadow:0px 0px 10px gray;
+}
+
+textarea{
+width:100%;
+height:100px;
+padding:10px;
+font-size:16px;
+border-radius:5px;
+border:1px solid gray;
+}
+
+button{
+margin-top:15px;
+padding:10px 20px;
+font-size:16px;
+background:#4CAF50;
+color:white;
+border:none;
+border-radius:5px;
+cursor:pointer;
+}
+
+button:hover{
+background:#45a049;
+}
+
+.output{
+margin-top:20px;
+padding:20px;
+border-radius:10px;
+font-size:18px;
+font-weight:bold;
+color:white;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Sentiment Analysis Tester</h2>
+
+<p>Enter a sentence to test sentiment</p>
+
+<textarea id="inputText" placeholder="Type your sentence here..."></textarea>
+
+<br>
+
+<button onclick="analyzeSentiment()">Analyze Sentiment</button>
+
+<div class="output" id="outputBox">
+Result will appear here
+</div>
+
+</div>
+
+<script>
+
+const positiveWords = [
+"good","great","happy","love","excellent",
+"awesome","fantastic","amazing","nice","wonderful"
+];
+
+const negativeWords = [
+"bad","sad","hate","terrible","worst",
+"angry","awful","poor","disappointing","boring"
+];
+
+function analyzeSentiment(){
+
+let text = document.getElementById("inputText").value.toLowerCase();
+
+if(text.trim()==""){
+alert("Please enter a sentence");
+return;
+}
+
+let words = text.split(" ");
+
+let posCount = 0;
+let negCount = 0;
+
+words.forEach(word => {
+
+if(positiveWords.includes(word))
+posCount++;
+
+if(negativeWords.includes(word))
+negCount++;
+
+});
+
+let sentiment = "";
+let confidence = 0;
+
+let total = posCount + negCount;
+
+let box = document.getElementById("outputBox");
+
+if(posCount > negCount){
+
+sentiment = "Positive 😊";
+confidence = (posCount/(total || 1)*100).toFixed(2);
+box.style.background = "linear-gradient(45deg,#00c853,#69f0ae)";
+
+}
+
+else if(negCount > posCount){
+
+sentiment = "Negative 😠";
+confidence = (negCount/(total || 1)*100).toFixed(2);
+box.style.background = "linear-gradient(45deg,#d50000,#ff5252)";
+
+}
+
+else{
+
+sentiment = "Neutral 😐";
+confidence = 50;
+box.style.background = "linear-gradient(45deg,#f9a825,#ffd54f)";
+
+}
+
+box.innerHTML =
+"Predicted Sentiment: " + sentiment +
+"<br><br>Confidence Score: " + confidence + "%";
+
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sentiment Model Comparison</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+
+<style>
+
+body{
+font-family: Arial;
+text-align:center;
+background:linear-gradient(120deg,#89f7fe,#66a6ff);
+padding:40px;
+}
+
+.container{
+background:white;
+padding:30px;
+border-radius:10px;
+width:500px;
+margin:auto;
+box-shadow:0px 0px 10px gray;
+}
+
+button{
+padding:12px 20px;
+font-size:16px;
+background:#4CAF50;
+color:white;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+button:hover{
+background:#3e8e41;
+}
+
+.output{
+
+margin-top:25px;
+padding:25px;
+border-radius:10px;
+
+background-image:url("https://images.unsplash.com/photo-1490750967868-88aa4486c946");
+background-size:cover;
+background-position:center;
+
+color:white;
+font-weight:bold;
+font-size:18px;
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Sentiment Model Comparison</h2>
+
+<p>Compare performance of Dense Network vs RNN</p>
+
+<button onclick="runModels()">Train & Compare Models</button>
+
+<div class="output" id="outputBox">
+Results will appear here 🌸
+</div>
+
+</div>
+
+<script>
+
+async function runModels(){
+
+document.getElementById("outputBox").innerHTML="Training models... Please wait ⏳";
+
+const sentences=[
+"I love this product",
+"This is amazing",
+"I am very happy",
+"I hate this",
+"This is terrible",
+"Very bad experience",
+"Absolutely wonderful",
+"Awful service",
+"I am satisfied",
+"I am disappointed"
+];
+
+const labels=[1,1,1,0,0,0,1,0,1,0];
+
+// simple vocabulary
+const vocab={
+love:1, amazing:2, happy:3, hate:4, terrible:5,
+bad:6, wonderful:7, awful:8, satisfied:9, disappointed:10
+};
+
+function encode(sentence){
+
+let words=sentence.toLowerCase().split(" ");
+let arr=[0,0,0,0,0];
+
+for(let i=0;i<words.length && i<5;i++){
+arr[i]=vocab[words[i]] || 0;
+}
+
+return arr;
+
+}
+
+let encoded=sentences.map(s=>encode(s));
+
+const xs=tf.tensor2d(encoded);
+const ys=tf.tensor2d(labels,[labels.length,1]);
+
+// Dense Model
+
+const denseModel=tf.sequential();
+
+denseModel.add(tf.layers.embedding({inputDim:20,outputDim:8,inputLength:5}));
+
+denseModel.add(tf.layers.flatten());
+
+denseModel.add(tf.layers.dense({units:6,activation:"relu"}));
+
+denseModel.add(tf.layers.dense({units:1,activation:"sigmoid"}));
+
+denseModel.compile({
+optimizer:"adam",
+loss:"binaryCrossentropy",
+metrics:["accuracy"]
+});
+
+await denseModel.fit(xs,ys,{epochs:20});
+
+const denseEval=denseModel.evaluate(xs,ys);
+
+const denseAcc=(await denseEval[1].data())[0];
+
+
+// RNN Model
+
+const rnnModel=tf.sequential();
+
+rnnModel.add(tf.layers.embedding({inputDim:20,outputDim:8,inputLength:5}));
+
+rnnModel.add(tf.layers.simpleRNN({units:8}));
+
+rnnModel.add(tf.layers.dense({units:1,activation:"sigmoid"}));
+
+rnnModel.compile({
+optimizer:"adam",
+loss:"binaryCrossentropy",
+metrics:["accuracy"]
+});
+
+await rnnModel.fit(xs,ys,{epochs:20});
+
+const rnnEval=rnnModel.evaluate(xs,ys);
+
+const rnnAcc=(await rnnEval[1].data())[0];
+
+document.getElementById("outputBox").innerHTML=
+
+"🌸 Dense Network Accuracy: "+(denseAcc*100).toFixed(2)+"% <br><br>"+
+
+"🌸 RNN Accuracy: "+(rnnAcc*100).toFixed(2)+"% <br><br>"+
+
+"🌸 Observation: RNN understands word sequence better than Dense Network.";
+
+}
+
+</script>
+
+</body>
+</html>
