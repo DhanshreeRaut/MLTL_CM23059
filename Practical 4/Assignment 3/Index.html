@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MobileNet Image Classification</title>
+
+<!-- TensorFlow.js -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<!-- MobileNet model -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1>Image Classification with Pre-trained Model (MobileNet)</h1>
+
+<div id="image-container">
+    <img id="input-image" src="" alt="Upload an image">
+</div>
+
+<input type="file" id="image-upload" accept="image/*">
+
+<div id="predictions"></div>
+
+<!-- Link external JS -->
+<script src="script.js"></script>
+
+</body>
+</html>

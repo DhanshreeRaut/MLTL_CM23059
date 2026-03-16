@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MobileNet - Test 5 Images</title>
+
+<!-- TensorFlow.js -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<!-- MobileNet model -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background: #f9f9f9;
+}
+h1 { color: #333; }
+#images-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+}
+.image-card {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+    margin: 10px;
+    padding: 10px;
+    width: 250px;
+    text-align: center;
+}
+.image-card img {
+    max-width: 200px;
+    border-radius: 8px;
+}
+.predictions {
+    margin-top: 10px;
+    font-size: 14px;
+    text-align: left;
+}
+</style>
+</head>
+<body>
+
+<h1>MobileNet - Test Classification on 5 Images</h1>
+<p>Upload 5 images (or multiple images at once) to test classification accuracy.</p>
+
+<input type="file" id="image-upload" accept="image/*" multiple>
+<div id="images-container"></div>
+
+<script>
+let model;
+
+// Load MobileNet model
+async function loadModel() {
+    model = await mobilenet.load();
+    console.log("MobileNet model loaded!");
+}
+loadModel();
+
+// Handle multiple image upload
+const imageUpload = document.getElementById('image-upload');
+const imagesContainer = document.getElementById('images-container');
+
+imageUpload.addEventListener('change', async (event) => {
+    const files = event.target.files;
+    imagesContainer.innerHTML = ""; // clear previous images
+
+    // Limit to first 5 images
+    const fileArray = Array.from(files).slice(0, 5);
+
+    for (const file of fileArray) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const imageSrc = e.target.result;
+
+            // Create image card
+            const card = document.createElement('div');
+            card.className = "image-card";
+            const img = document.createElement('img');
+            img.src = imageSrc;
+            card.appendChild(img);
+
+            const predictionsDiv = document.createElement('div');
+            predictionsDiv.className = "predictions";
+            predictionsDiv.innerHTML = "Classifying...";
+            card.appendChild(predictionsDiv);
+
+            imagesContainer.appendChild(card);
+
+            // Classify image after it loads
+            img.onload = async function() {
+                const predictions = await model.classify(img);
+                let html = "<strong>Top-3 Predictions:</strong><br>";
+                predictions.forEach((pred, index) => {
+                    html += `${index+1}. ${pred.className} - ${(pred.probability*100).toFixed(2)}%<br>`;
+                });
+                predictionsDiv.innerHTML = html;
+            }
+        }
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+
+</body>
+</html>

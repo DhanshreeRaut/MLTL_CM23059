@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MobileNet Image Classification</title>
+
+<!-- TensorFlow.js -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<!-- MobileNet model -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
+<style>
+  body { font-family: Arial; text-align: center; padding: 30px; background:#f0f0f0; }
+  h1 { color:#333; }
+  #image-container img { max-width:300px; border-radius:10px; margin-top:20px; }
+  #predictions { margin-top:20px; font-size:18px; }
+</style>
+</head>
+<body>
+
+<h1>MobileNet Image Classification</h1>
+
+<div id="image-container">
+  <img id="input-image" src="" alt="Upload an image">
+</div>
+
+<input type="file" id="image-upload" accept="image/*">
+
+<div id="predictions"></div>
+
+<script>
+let model;
+
+// Load MobileNet model
+async function loadModel() {
+  model = await mobilenet.load(); // fixed: mobilenet is now defined correctly
+  console.log("MobileNet model loaded!");
+}
+loadModel();
+
+// Handle image upload
+const imageUpload = document.getElementById('image-upload');
+const inputImage = document.getElementById('input-image');
+const predictionsDiv = document.getElementById('predictions');
+
+imageUpload.addEventListener('change', (event) => {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    inputImage.src = e.target.result;
+    inputImage.onload = classifyImage;
+  }
+  reader.readAsDataURL(file);
+});
+
+// Classify the image
+async function classifyImage() {
+  predictionsDiv.innerHTML = "Classifying...";
+  const predictions = await model.classify(inputImage);
+
+  predictionsDiv.innerHTML = "<h3>Top-3 Predictions:</h3>";
+  predictions.forEach((pred, index) => {
+    predictionsDiv.innerHTML += `<p>${index+1}. ${pred.className} - ${(pred.probability*100).toFixed(2)}%</p>`;
+  });
+}
+</script>
+
+</body>
+</html>
