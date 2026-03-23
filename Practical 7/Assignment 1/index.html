@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Train & Save Model (LocalStorage)</title>
+
+    <!-- TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            padding: 40px;
+            margin: 0;
+
+            /* 🎨 Cartoon Gradient Background */
+            background: linear-gradient(135deg, #89f7fe, #66a6ff);
+            overflow: hidden;
+        }
+
+        /* 🎈 Floating cartoon circles */
+        body::before, body::after {
+            content: "";
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.3;
+        }
+
+        body::before {
+            width: 200px;
+            height: 200px;
+            background: yellow;
+            top: 10%;
+            left: 5%;
+        }
+
+        body::after {
+            width: 300px;
+            height: 300px;
+            background: pink;
+            bottom: 10%;
+            right: 5%;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            width: 300px;
+            margin: auto;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            width: 80%;
+            border-radius: 8px;
+            border: none;
+        }
+
+        button {
+            background: #007BFF;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        input {
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>ML Model in Browser</h2>
+
+    <button onclick="trainModel()">Train Model</button>
+    <button onclick="loadModel()">Load Model</button>
+
+    <br>
+
+    <input type="number" id="inputValue" placeholder="Enter value">
+    <button onclick="predict()">Predict</button>
+
+    <h3 id="result">Result: </h3>
+</div>
+
+<script>
+let model;
+
+// Train Model
+async function trainModel() {
+
+    model = tf.sequential();
+    model.add(tf.layers.dense({units: 1, inputShape: [1]}));
+
+    model.compile({
+        loss: 'meanSquaredError',
+        optimizer: 'sgd'
+    });
+
+    const xs = tf.tensor2d([1, 2, 3, 4], [4, 1]);
+    const ys = tf.tensor2d([3, 5, 7, 9], [4, 1]);
+
+    document.getElementById("result").innerText = "Training...";
+
+    await model.fit(xs, ys, {epochs: 200});
+
+    await model.save('localstorage://my-model');
+
+    document.getElementById("result").innerText = "Model trained & saved!";
+}
+
+// Load Model
+async function loadModel() {
+    model = await tf.loadLayersModel('localstorage://my-model');
+    document.getElementById("result").innerText = "Model loaded!";
+}
+
+// Predict
+async function predict() {
+
+    if (!model) {
+        alert("Load or train model first!");
+        return;
+    }
+
+    let input = document.getElementById("inputValue").value;
+
+    let tensor = tf.tensor2d([[parseFloat(input)]]);
+    let prediction = model.predict(tensor);
+    let output = await prediction.data();
+
+    document.getElementById("result").innerText = 
+        "Result: " + output[0].toFixed(2);
+}
+</script>
+
+</body>
+</html>
