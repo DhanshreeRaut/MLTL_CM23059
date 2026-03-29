@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fruit Classifier with Confusion Matrix</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            margin-top: 20px;
+        }
+
+        img {
+            margin-top: 20px;
+            width: 300px;
+            border-radius: 10px;
+        }
+
+        table {
+            margin: 30px auto;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 10px 20px;
+        }
+
+        th {
+            background-color: #ddd;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>Fruit Classifier with Confusion Matrix</h1>
+
+<input type="file" id="imageInput" accept="image/*">
+
+<br>
+<img id="preview" src="" alt="Image Preview">
+
+<h2>Confusion Matrix</h2>
+
+<table>
+    <tr>
+        <th>Actual \ Predicted</th>
+        <th>Apple</th>
+        <th>Banana</th>
+        <th>Orange</th>
+    </tr>
+    <tr>
+        <td>Apple</td>
+        <td id="apple_apple">0</td>
+        <td id="apple_banana">0</td>
+        <td id="apple_orange">0</td>
+    </tr>
+    <tr>
+        <td>Banana</td>
+        <td id="banana_apple">0</td>
+        <td id="banana_banana">0</td>
+        <td id="banana_orange">0</td>
+    </tr>
+    <tr>
+        <td>Orange</td>
+        <td id="orange_apple">0</td>
+        <td id="orange_banana">0</td>
+        <td id="orange_orange">0</td>
+    </tr>
+</table>
+
+<script>
+    let matrix = {
+        Apple: {Apple: 0, Banana: 0, Orange: 0},
+        Banana: {Apple: 0, Banana: 0, Orange: 0},
+        Orange: {Apple: 0, Banana: 0, Orange: 0}
+    };
+
+    // Fake prediction using filename
+    function predictFruit(name) {
+        name = name.toLowerCase();
+
+        if (name.includes("banana")) return "Banana";
+        if (name.includes("apple")) return "Apple";
+        if (name.includes("orange")) return "Orange";
+
+        return "Apple"; // default
+    }
+
+    document.getElementById("imageInput").addEventListener("change", function(event) {
+        let file = event.target.files[0];
+
+        if (!file) return;
+
+        let fileName = file.name;
+
+        // Show image preview
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById("preview").src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        // Assume actual label from filename
+        let actual = predictFruit(fileName);
+
+        // Simulate prediction (same logic for now)
+        let predicted = predictFruit(fileName);
+
+        // Update confusion matrix
+        matrix[actual][predicted]++;
+
+        updateTable();
+    });
+
+    function updateTable() {
+        document.getElementById("apple_apple").innerText = matrix.Apple.Apple;
+        document.getElementById("apple_banana").innerText = matrix.Apple.Banana;
+        document.getElementById("apple_orange").innerText = matrix.Apple.Orange;
+
+        document.getElementById("banana_apple").innerText = matrix.Banana.Apple;
+        document.getElementById("banana_banana").innerText = matrix.Banana.Banana;
+        document.getElementById("banana_orange").innerText = matrix.Banana.Orange;
+
+        document.getElementById("orange_apple").innerText = matrix.Orange.Apple;
+        document.getElementById("orange_banana").innerText = matrix.Orange.Banana;
+        document.getElementById("orange_orange").innerText = matrix.Orange.Orange;
+    }
+</script>
+
+</body>
+</html>

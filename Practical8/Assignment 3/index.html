@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Incremental Fruit Classifier</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            text-align: center;
+            background: linear-gradient(to right, #74ebd5, #acb6e5);
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .container {
+            margin-top: 20px;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        img {
+            margin-top: 20px;
+            width: 300px;
+            border-radius: 15px;
+            border: 3px solid white;
+            box-shadow: 0px 0px 10px gray;
+        }
+
+        table {
+            margin: 30px auto;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+        }
+
+        td {
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+        }
+
+        .highlight {
+            background-color: #c8f7c5;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>🍎 Incremental Fruit Classifier</h1>
+
+<div class="container">
+    <input type="file" id="imageInput" accept="image/*">
+
+    <select id="categorySelect">
+        <option>Apple</option>
+        <option>Banana</option>
+        <option>Orange</option>
+    </select>
+
+    <button onclick="addCategory()">➕ Add Category</button>
+</div>
+
+<img id="preview">
+
+<h2>📊 Confusion Matrix</h2>
+
+<table id="matrixTable"></table>
+
+<script>
+    let categories = ["Apple", "Banana", "Orange"];
+
+    let matrix = {};
+
+    function initMatrix() {
+        matrix = {};
+        categories.forEach(a => {
+            matrix[a] = {};
+            categories.forEach(p => {
+                matrix[a][p] = 0;
+            });
+        });
+    }
+
+    initMatrix();
+
+    function renderTable() {
+        let table = document.getElementById("matrixTable");
+        table.innerHTML = "";
+
+        let header = "<tr><th>Actual \\ Predicted</th>";
+        categories.forEach(c => header += `<th>${c}</th>`);
+        header += "</tr>";
+        table.innerHTML += header;
+
+        categories.forEach(actual => {
+            let row = `<tr><td><b>${actual}</b></td>`;
+            categories.forEach(pred => {
+                let value = matrix[actual][pred];
+                let cls = (actual === pred && value > 0) ? "highlight" : "";
+                row += `<td class="${cls}">${value}</td>`;
+            });
+            row += "</tr>";
+            table.innerHTML += row;
+        });
+    }
+
+    renderTable();
+
+    function predictFruit(name) {
+        name = name.toLowerCase();
+
+        for (let cat of categories) {
+            if (name.includes(cat.toLowerCase())) {
+                return cat;
+            }
+        }
+
+        // Random fallback (to simulate ML mistakes)
+        return categories[Math.floor(Math.random() * categories.length)];
+    }
+
+    document.getElementById("imageInput").addEventListener("change", function(event) {
+        let file = event.target.files[0];
+        if (!file) return;
+
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById("preview").src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+
+        let actual = document.getElementById("categorySelect").value;
+        let predicted = predictFruit(file.name);
+
+        matrix[actual][predicted]++;
+
+        renderTable();
+    });
+
+    function addCategory() {
+        let newCat = prompt("Enter new fruit name:");
+        if (!newCat) return;
+
+        newCat = newCat.charAt(0).toUpperCase() + newCat.slice(1);
+
+        if (categories.includes(newCat)) {
+            alert("Already exists!");
+            return;
+        }
+
+        categories.push(newCat);
+
+        // Update dropdown
+        let select = document.getElementById("categorySelect");
+        let option = document.createElement("option");
+        option.text = newCat;
+        select.add(option);
+
+        // Rebuild matrix
+        categories.forEach(a => {
+            if (!matrix[a]) matrix[a] = {};
+            categories.forEach(p => {
+                if (!matrix[a][p]) matrix[a][p] = 0;
+            });
+        });
+
+        renderTable();
+    }
+</script>
+
+</body>
+</html>

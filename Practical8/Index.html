@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transfer Learning - MobileNet</title>
+
+    <!-- TensorFlow + MobileNet -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: black;
+            color: #00ffcc;
+            text-align: center;
+        }
+
+        .container {
+            margin: 30px auto;
+            width: 400px;
+            padding: 20px;
+            background: #111;
+            border-radius: 10px;
+            box-shadow: 0 0 15px #00ffcc;
+        }
+
+        button, input {
+            margin: 10px;
+            padding: 10px;
+        }
+
+        img {
+            width: 200px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>🍎 Transfer Learning (MobileNet)</h2>
+
+    <input type="file" id="imageUpload" accept="image/*">
+
+    <br>
+
+    <input type="text" id="label" placeholder="Enter label (e.g. Apple)">
+    <button onclick="addExample()">Add Example</button>
+
+    <br>
+
+    <button onclick="train()">Train Model</button>
+
+    <br>
+
+    <button onclick="predict()">Predict</button>
+
+    <h3 id="result">Result: </h3>
+
+    <img id="preview">
+</div>
+
+<script>
+let mobilenetModel;
+let classifier;
+let net;
+
+// Load MobileNet
+async function loadModel() {
+    mobilenetModel = await mobilenet.load();
+    net = mobilenetModel;
+    classifier = tf.sequential();
+    classifier.add(tf.layers.dense({units: 100, activation: 'relu', inputShape: [1024]}));
+    classifier.add(tf.layers.dense({units: 10, activation: 'softmax'}));
+
+    classifier.compile({
+        optimizer: 'adam',
+        loss: 'categoricalCrossentropy'
+    });
+
+    console.log("MobileNet Loaded!");
+}
+
+loadModel();
+
+// Show image preview
+document.getElementById("imageUpload").onchange = function(event) {
+    let img = document.getElementById("preview");
+    img.src = URL.createObjectURL(event.target.files[0]);
+};
+
+let trainingData = [];
+let labels = [];
+let labelMap = {};
+
+// Add training example
+async function addExample() {
+    let img = document.getElementById("preview");
+    let label = document.getElementById("label").value;
+
+    if (!label) {
+        alert("Enter label!");
+        return;
+    }
+
+    if (!(label in labelMap)) {
+        labelMap[label] = Object.keys(labelMap).length;
+    }
+
+    let activation = net.infer(img, true);
+    trainingData.push(activation);
+    labels.push(labelMap[label]);
+
+    alert("Example added: " + label);
+}
+
+// Train classifier
+async function train() {
+
+    const xs = tf.concat(trainingData);
+
+    const ys = tf.oneHot(tf.tensor1d(labels, 'int32'), Object.keys(labelMap).length);
+
+    await classifier.fit(xs, ys, {
+        epochs: 20
+    });
+
+    alert("Training complete!");
+}
+
+// Predict
+async function predict() {
+
+    let img = document.getElementById("preview");
+
+    let activation = net.infer(img, true);
+    let prediction = classifier.predict(activation);
+
+    let index = prediction.argMax(1).dataSync()[0];
+
+    let labelName = Object.keys(labelMap).find(
+        key => labelMap[key] === index
+    );
+
+    document.getElementById("result").innerText =
+        "Result: " + labelName;
+}
+</script>
+
+</body>
+</html>

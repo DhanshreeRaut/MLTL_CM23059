@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Transfer Learning - Fruits Classifier</title>
+
+    <!-- TensorFlow + MobileNet -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: black;
+            color: #00ffcc;
+            text-align: center;
+        }
+
+        .container {
+            margin: 30px auto;
+            width: 400px;
+            padding: 20px;
+            background: #111;
+            border-radius: 10px;
+            box-shadow: 0 0 15px #00ffcc;
+        }
+
+        button, input {
+            margin: 8px;
+            padding: 10px;
+            border-radius: 6px;
+            border: none;
+        }
+
+        button {
+            background: #00ffcc;
+            color: black;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #00ccaa;
+        }
+
+        img {
+            width: 200px;
+            margin-top: 10px;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>🍎 Fruits Classifier (Transfer Learning)</h2>
+
+    <input type="file" id="imageUpload" accept="image/*">
+    <br>
+
+    <img id="preview">
+
+    <br>
+
+    <button onclick="addExample(0)">Add Apple 🍎</button>
+    <button onclick="addExample(1)">Add Banana 🍌</button>
+    <button onclick="addExample(2)">Add Orange 🍊</button>
+
+    <br>
+
+    <button onclick="train()">Train Model</button>
+    <button onclick="predict()">Predict</button>
+
+    <h3 id="result">Result: </h3>
+</div>
+
+<script>
+let mobilenetModel;
+let classifier;
+let net;
+
+let trainingData = [];
+let labels = [];
+
+const classes = ["Apple 🍎", "Banana 🍌", "Orange 🍊"];
+
+// Load MobileNet
+async function loadModel() {
+    mobilenetModel = await mobilenet.load();
+    net = mobilenetModel;
+
+    classifier = tf.sequential();
+    classifier.add(tf.layers.dense({
+        units: 100,
+        activation: 'relu',
+        inputShape: [1024]
+    }));
+    classifier.add(tf.layers.dense({
+        units: 3,
+        activation: 'softmax'
+    }));
+
+    classifier.compile({
+        optimizer: 'adam',
+        loss: 'categoricalCrossentropy'
+    });
+
+    console.log("✅ MobileNet Loaded");
+}
+
+loadModel();
+
+// Image preview
+document.getElementById("imageUpload").onchange = function(event) {
+    let img = document.getElementById("preview");
+    img.src = URL.createObjectURL(event.target.files[0]);
+};
+
+// Add example
+async function addExample(classIndex) {
+
+    let img = document.getElementById("preview");
+
+    if (!img.src) {
+        alert("Upload image first!");
+        return;
+    }
+
+    let activation = net.infer(img, true);
+
+    trainingData.push(activation);
+    labels.push(classIndex);
+
+    alert("Added: " + classes[classIndex]);
+}
+
+// Train model
+async function train() {
+
+    if (trainingData.length === 0) {
+        alert("Add data first!");
+        return;
+    }
+
+    const xs = tf.concat(trainingData);
+
+    const ys = tf.oneHot(
+        tf.tensor1d(labels, 'int32'),
+        3
+    );
+
+    document.getElementById("result").innerText = "Training...";
+
+    await classifier.fit(xs, ys, {
+        epochs: 20
+    });
+
+    document.getElementById("result").innerText = "Training Complete!";
+}
+
+// Predict
+async function predict() {
+
+    let img = document.getElementById("preview");
+
+    if (!img.src) {
+        alert("Upload image first!");
+        return;
+    }
+
+    let activation = net.infer(img, true);
+    let prediction = classifier.predict(activation);
+
+    let index = prediction.argMax(1).dataSync()[0];
+
+    document.getElementById("result").innerText =
+        "Result: " + classes[index];
+}
+</script>
+
+</body>
+</html>
