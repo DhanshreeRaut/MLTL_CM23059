@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Quote App</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+</head>
+<body>
+
+<div class="phone">
+
+    <h2>✨ AI Quote App</h2>
+
+    <select id="category">
+        <option value="all">All</option>
+        <option value="motivation">Motivation</option>
+        <option value="success">Success</option>
+        <option value="life">Life</option>
+    </select>
+
+    <p id="quote">Tap below to generate ✨</p>
+    <h4 id="author"></h4>
+
+    <div class="buttons">
+        <button onclick="generateQuote()">Generate</button>
+        <button onclick="copyQuote()">Copy</button>
+        <button onclick="speakQuote()">🔊</button>
+        <button onclick="saveFavorite()">❤️</button>
+    </div>
+
+    <div class="extra">
+        <button onclick="toggleAuto()">Auto</button>
+        <button onclick="shareQuote()">Share</button>
+    </div>
+
+    <p id="count">Quotes Generated: 0</p>
+
+    <label>
+        🌙 Dark Mode
+        <input type="checkbox" onchange="toggleDark()">
+    </label>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
